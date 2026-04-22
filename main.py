@@ -16,9 +16,9 @@ from sklearn.metrics import ConfusionMatrixDisplay
 
 seed = 21
 
-def mostrar_melhor_hiperparametrizacao(best, X_train, X_test, y_train, y_test):
+def mostrar_melhor_hiperparametrizacao(model, best, X_train, X_test, y_train, y_test):
     # Melhor Hiperparametrização
-    print(f"\nMelhor Hiperparametrização:")
+    print(f"\nMelhor Hiperparametrização ({ model }):")
 
     # com dados do treinamento
     y_pred_train = best.predict(X_train)
@@ -100,8 +100,8 @@ def main():
     best_cart = classificador_cart(k_folds, X_train, X_test, y_train, y_test)
     best_rn = classificador_rn(k_folds, X_train, X_test, y_train, y_test)
 
-    mostrar_melhor_hiperparametrizacao(best_cart, X_train, X_test, y_train, y_test)
-    mostrar_melhor_hiperparametrizacao(best_rn, X_train, X_test, y_train, y_test)
+    mostrar_melhor_hiperparametrizacao("CART", best_cart, X_train, X_test, y_train, y_test)
+    mostrar_melhor_hiperparametrizacao("MLP", best_rn, X_train, X_test, y_train, y_test)
 
 
 if __name__ == "__main__":
