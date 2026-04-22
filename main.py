@@ -16,9 +16,12 @@ from sklearn.metrics import ConfusionMatrixDisplay
 
 seed = 21
 
-def mostrar_melhor_hiperparametrizacao(model, best, X_train, X_test, y_train, y_test):
+def mostrar_melhor_hiperparametrizacao(model, clf, X_train, X_test, y_train, y_test):
     # Melhor Hiperparametrização
     print(f"\nMelhor Hiperparametrização ({ model }):")
+    print("- Parâmetros:", clf.best_params_)
+
+    best = clf.best_estimator_
 
     # com dados do treinamento
     y_pred_train = best.predict(X_train)
@@ -29,8 +32,6 @@ def mostrar_melhor_hiperparametrizacao(model, best, X_train, X_test, y_train, y_
     y_pred_test = best.predict(X_test)
     acc_test = accuracy_score(y_test, y_pred_test) * 100
     print(f"- Acuracia com dados de teste: {acc_test:.2f}%")
-
-    print("- Parâmetros:", best)
 
     # Matriz de confusão
     ConfusionMatrixDisplay.from_predictions(y_test, y_pred_test)
@@ -56,7 +57,7 @@ def classificador_cart(k_folds, X_train, X_test, y_train, y_test):
     # tree.plot_tree(best, filled=True, rounded=True, class_names=True, fontsize=8)
     # plt.show()
 
-    return clf_cart.best_estimator_
+    return clf_cart
 
 
 def classificador_rn(k_folds, X_train, X_test, y_train, y_test):
@@ -73,7 +74,7 @@ def classificador_rn(k_folds, X_train, X_test, y_train, y_test):
     clf_rn = GridSearchCV(model, parameters, cv=k_folds, scoring='f1_weighted', verbose=4)
     clf_rn.fit(X_train, y_train)
     
-    return clf_rn.best_estimator_
+    return clf_rn
 
 
 def main():
@@ -97,11 +98,11 @@ def main():
 
     X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.3, shuffle=True)
 
-    best_cart = classificador_cart(k_folds, X_train, X_test, y_train, y_test)
-    best_rn = classificador_rn(k_folds, X_train, X_test, y_train, y_test)
+    clf_cart = classificador_cart(k_folds, X_train, X_test, y_train, y_test)
+    clf_rn = classificador_rn(k_folds, X_train, X_test, y_train, y_test)
 
-    mostrar_melhor_hiperparametrizacao("CART", best_cart, X_train, X_test, y_train, y_test)
-    mostrar_melhor_hiperparametrizacao("MLP", best_rn, X_train, X_test, y_train, y_test)
+    mostrar_melhor_hiperparametrizacao("CART", clf_cart, X_train, X_test, y_train, y_test)
+    mostrar_melhor_hiperparametrizacao("MLP", clf_rn, X_train, X_test, y_train, y_test)
 
 
 if __name__ == "__main__":
