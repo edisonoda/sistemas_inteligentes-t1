@@ -56,9 +56,12 @@ def mostrar_melhor_hiperparametrizacao(model, clf, X_train, X_test, y_train, y_t
 
 def classificador_cart(k_folds, X_train, X_test, y_train, y_test):
     parameters = {
-        'criterion': ['entropy', 'gini'],
-        'max_depth': [1, 5, 10, 15, 20],
-        'min_samples_leaf': [1, 2, 4, 8, 16]
+        'criterion': ['gini'],
+        'max_depth': [15],
+        'min_samples_leaf': [8]
+        # 'criterion': ['entropy', 'gini'],
+        # 'max_depth': [1, 5, 10, 15, 20],
+        # 'min_samples_leaf': [1, 2, 4, 8, 16]
     }
 
     # instantiate model
@@ -77,9 +80,12 @@ def classificador_cart(k_folds, X_train, X_test, y_train, y_test):
 
 def classificador_rn(k_folds, X_train, X_test, y_train, y_test):
     parameters = {
-        'hidden_layer_sizes': [(32,), (16, 16), (16, 8, 4)],
-        'activation': ['identity', 'tanh', 'relu'],
-        'learning_rate_init': [0.01, 0.03, 0.05]
+        'hidden_layer_sizes': [(16, 16)],
+        'activation': ['identity'],
+        'learning_rate_init': [0.03]
+        # 'hidden_layer_sizes': [(32,), (16, 16), (16, 8, 4)],
+        # 'activation': ['identity', 'tanh', 'relu'],
+        # 'learning_rate_init': [0.01, 0.03, 0.05]
     }
 
     # instantiate model
