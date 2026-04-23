@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from gerar_dados_vitimas import gerar_dataset_vitimas
 
@@ -56,7 +57,7 @@ def mostrar_melhor_hiperparametrizacao(model, clf, X_train, X_test, y_train, y_t
     print(f"- Acuracia (treino | teste): {acc_train:.2f}% | {acc_test:.2f}%")
     print(f"- Precisao (treino | teste): {prec_train:.2f}% | {prec_test:.2f}%")
     print(f"- Recall (treino | teste): {recall_train:.2f}% | {recall_test:.2f}%")
-    print(f"- F1 ponderado (treino | teste): {f1_train:.4f} | {f1_test:.4f}")
+    print(f"- F1-score weighted (treino | teste): {f1_train:.4f} | {f1_test:.4f}")
     print(f"- F1-score (treino | teste): {train_f1_vies:.4f} | {test_f1_vies:.4f}")
     print(f"\t- Dif: {abs(train_f1_vies - test_f1_vies):.4f}")
     print(f"- Variancia (treino | teste): {var_train:.8f} | {var_test:.8f}")
@@ -69,15 +70,14 @@ def mostrar_melhor_hiperparametrizacao(model, clf, X_train, X_test, y_train, y_t
 
     # plt.show()
 
-
 def classificador_cart(k_folds, X_train, X_test, y_train, y_test):
     parameters = {
-        'criterion': ['gini'],
-        'max_depth': [15],
-        'min_samples_leaf': [8]
-        # 'criterion': ['entropy', 'gini'],
-        # 'max_depth': [1, 5, 10, 15, 20],
-        # 'min_samples_leaf': [1, 2, 4, 8, 16]
+        # 'criterion': ['gini'],
+        # 'max_depth': [15],
+        # 'min_samples_leaf': [8]
+        'criterion': ['entropy', 'gini'],
+        'max_depth': [1, 5, 10, 15, 20],
+        'min_samples_leaf': [1, 2, 4, 8, 16]
     }
 
     # instantiate model
@@ -96,12 +96,12 @@ def classificador_cart(k_folds, X_train, X_test, y_train, y_test):
 
 def classificador_rn(k_folds, X_train, X_test, y_train, y_test):
     parameters = {
-        'hidden_layer_sizes': [(16, 16)],
-        'activation': ['identity'],
-        'learning_rate_init': [0.03]
-        # 'hidden_layer_sizes': [(32,), (16, 16), (16, 8, 4)],
-        # 'activation': ['identity', 'tanh', 'relu'],
-        # 'learning_rate_init': [0.01, 0.03, 0.05]
+        # 'hidden_layer_sizes': [(16, 16)],
+        # 'activation': ['identity'],
+        # 'learning_rate_init': [0.03]
+        'hidden_layer_sizes': [(32,), (16, 16), (16, 8, 4)],
+        'activation': ['identity', 'tanh', 'relu'],
+        'learning_rate_init': [0.01, 0.03, 0.05]
     }
 
     # instantiate model
@@ -112,6 +112,29 @@ def classificador_rn(k_folds, X_train, X_test, y_train, y_test):
     clf_rn.fit(X_train, y_train)
     
     return clf_rn
+
+
+def mostrar_metricas_predicao(model, y, y_pred):
+    prec = precision_score(y, y_pred, average='weighted') * 100
+    recall = recall_score(y, y_pred, average='weighted') * 100
+    f1 = f1_score(y, y_pred, average='weighted')
+
+    print(f"\nTeste Cego ({ model }):")
+    print(f"- Precisao: {prec:.2f}%")
+    print(f"- Recall: {recall:.2f}%")
+    print(f"- F1-score: {f1:.4f}")
+
+    # Matriz de confusão
+    ConfusionMatrixDisplay.from_predictions(y, y_pred)
+    print(f"\nMatriz de confusão:")
+    print(classification_report(y, y_pred))
+
+    plt.show()
+
+def teste_cego(clf, X_train, y_train, x, y):
+    best = clf.best_estimator_
+    best.fit(X_train, y_train)
+    return best.predict(x)
 
 
 def main():
@@ -141,6 +164,17 @@ def main():
     mostrar_melhor_hiperparametrizacao("CART", clf_cart, X_train, X_test, y_train, y_test, k_folds)
     mostrar_melhor_hiperparametrizacao("MLP", clf_rn, X_train, X_test, y_train, y_test, k_folds)
 
+    # Testes cegos
+    df_blind = pd.read_csv("datasets/1000v/data.csv")
+
+    x_blind = df_blind.drop(columns=['gcs', 'avpu', 'tri', 'sobr'])
+    y_blind = df_blind.get(['tri'])
+
+    pred_cart = teste_cego(clf_cart, X_train, y_train, x_blind, y_blind)
+    pred_rn = teste_cego(clf_rn, X_train, y_train, x_blind, y_blind)
+
+    mostrar_metricas_predicao('CART', y_blind, pred_cart)
+    mostrar_metricas_predicao('MLP', y_blind, pred_rn)
 
 if __name__ == "__main__":
     main()
