@@ -4,7 +4,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.metrics import classification_report
 
 from sklearn.neural_network import MLPClassifier
@@ -26,17 +26,32 @@ def mostrar_melhor_hiperparametrizacao(model, clf, X_train, X_test, y_train, y_t
     # com dados do treinamento
     y_pred_train = best.predict(X_train)
     acc_train = accuracy_score(y_train, y_pred_train) * 100
-    print(f"- Acuracia com dados de treino: {acc_train:.2f}%")
+    prec_train = precision_score(y_train, y_pred_train, average='weighted') * 100
+    recall_train = recall_score(y_train, y_pred_train, average='weighted') * 100
+    f1_train = f1_score(y_train, y_pred_train, average='weighted')
 
     # com dados de teste
     y_pred_test = best.predict(X_test)
     acc_test = accuracy_score(y_test, y_pred_test) * 100
-    print(f"- Acuracia com dados de teste: {acc_test:.2f}%")
+    prec_test = precision_score(y_test, y_pred_test, average='weighted') * 100
+    recall_test = recall_score(y_test, y_pred_test, average='weighted') * 100
+    f1_test = f1_score(y_test, y_pred_test, average='weighted')
+
+    train_f1_v = clf.cv_results_['mean_train_score'][clf.best_index_]
+    test_f1_v = clf.cv_results_['mean_test_score'][clf.best_index_]
+
+    print(f"- Acuracia (treino | teste): {acc_train:.2f}% | {acc_test:.2f}%")
+    print(f"- Precisao (treino | teste): {prec_train:.2f}% | {prec_test:.2f}%")
+    print(f"- Recall (treino | teste): {recall_train:.2f}% | {recall_test:.2f}%")
+    print(f"- F1 ponderado (treino | teste): {f1_train:.4f} | {f1_test:.4f}")
+    print(f"- F1-score (treino | teste): {train_f1_v:.4f} | {test_f1_v:.4f}")
 
     # Matriz de confusão
     ConfusionMatrixDisplay.from_predictions(y_test, y_pred_test)
     print(f"\nMatriz de confusão:")
     print(classification_report(y_test, y_pred_test))
+
+    # plt.show()
 
 
 def classificador_cart(k_folds, X_train, X_test, y_train, y_test):
@@ -50,7 +65,7 @@ def classificador_cart(k_folds, X_train, X_test, y_train, y_test):
     model = DecisionTreeClassifier(random_state=seed)
 
     # grid search using cv
-    clf_cart = GridSearchCV(model, parameters, cv=k_folds, scoring='f1_weighted', verbose=4)
+    clf_cart = GridSearchCV(model, parameters, cv=k_folds, scoring='f1_weighted', verbose=4, return_train_score=True)
     clf_cart.fit(X_train, y_train)
 
     # fig = plt.figure(figsize=(16, 9))
@@ -62,7 +77,7 @@ def classificador_cart(k_folds, X_train, X_test, y_train, y_test):
 
 def classificador_rn(k_folds, X_train, X_test, y_train, y_test):
     parameters = {
-        'hidden_layer_sizes': [(32,), (16, 16), (16, 4)],
+        'hidden_layer_sizes': [(32,), (16, 16), (16, 8, 4)],
         'activation': ['identity', 'tanh', 'relu'],
         'learning_rate_init': [0.01, 0.03, 0.05]
     }
@@ -71,7 +86,7 @@ def classificador_rn(k_folds, X_train, X_test, y_train, y_test):
     model = MLPClassifier(random_state=seed)
 
     # grid search using cv
-    clf_rn = GridSearchCV(model, parameters, cv=k_folds, scoring='f1_weighted', verbose=4)
+    clf_rn = GridSearchCV(model, parameters, cv=k_folds, scoring='f1_weighted', verbose=4, return_train_score=True)
     clf_rn.fit(X_train, y_train)
     
     return clf_rn
