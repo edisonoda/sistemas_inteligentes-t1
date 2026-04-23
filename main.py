@@ -1,3 +1,5 @@
+import numpy as np
+
 from gerar_dados_vitimas import gerar_dataset_vitimas
 
 from sklearn.tree import DecisionTreeClassifier
@@ -16,7 +18,15 @@ from sklearn.metrics import ConfusionMatrixDisplay
 
 seed = 21
 
-def mostrar_melhor_hiperparametrizacao(model, clf, X_train, X_test, y_train, y_test):
+def calcular_variancia(clf, k_folds, which):
+    scores = []
+
+    for i in range(k_folds):
+        scores.append(clf.cv_results_[f'split{i}_{which}_score'])
+    
+    return np.var(np.array(scores), ddof=1)
+
+def mostrar_melhor_hiperparametrizacao(model, clf, X_train, X_test, y_train, y_test, k_folds):
     # Melhor Hiperparametrização
     print(f"\nMelhor Hiperparametrização ({ model }):")
     print("- Parâmetros:", clf.best_params_)
@@ -30,6 +40,9 @@ def mostrar_melhor_hiperparametrizacao(model, clf, X_train, X_test, y_train, y_t
     recall_train = recall_score(y_train, y_pred_train, average='weighted') * 100
     f1_train = f1_score(y_train, y_pred_train, average='weighted')
 
+    train_f1_vies = clf.cv_results_['mean_train_score'][clf.best_index_]
+    var_train = calcular_variancia(clf, k_folds, 'train')
+
     # com dados de teste
     y_pred_test = best.predict(X_test)
     acc_test = accuracy_score(y_test, y_pred_test) * 100
@@ -37,14 +50,17 @@ def mostrar_melhor_hiperparametrizacao(model, clf, X_train, X_test, y_train, y_t
     recall_test = recall_score(y_test, y_pred_test, average='weighted') * 100
     f1_test = f1_score(y_test, y_pred_test, average='weighted')
 
-    train_f1_v = clf.cv_results_['mean_train_score'][clf.best_index_]
-    test_f1_v = clf.cv_results_['mean_test_score'][clf.best_index_]
+    test_f1_vies = clf.cv_results_['mean_test_score'][clf.best_index_]
+    var_test = calcular_variancia(clf, k_folds, 'test')
 
     print(f"- Acuracia (treino | teste): {acc_train:.2f}% | {acc_test:.2f}%")
     print(f"- Precisao (treino | teste): {prec_train:.2f}% | {prec_test:.2f}%")
     print(f"- Recall (treino | teste): {recall_train:.2f}% | {recall_test:.2f}%")
     print(f"- F1 ponderado (treino | teste): {f1_train:.4f} | {f1_test:.4f}")
-    print(f"- F1-score (treino | teste): {train_f1_v:.4f} | {test_f1_v:.4f}")
+    print(f"- F1-score (treino | teste): {train_f1_vies:.4f} | {test_f1_vies:.4f}")
+    print(f"\t- Dif: {abs(train_f1_vies - test_f1_vies):.4f}")
+    print(f"- Variancia (treino | teste): {var_train:.8f} | {var_test:.8f}")
+    print(f"\t- Dif: {abs(var_train - var_test):.8f}")
 
     # Matriz de confusão
     ConfusionMatrixDisplay.from_predictions(y_test, y_pred_test)
@@ -122,8 +138,8 @@ def main():
     clf_cart = classificador_cart(k_folds, X_train, X_test, y_train, y_test)
     clf_rn = classificador_rn(k_folds, X_train, X_test, y_train, y_test)
 
-    mostrar_melhor_hiperparametrizacao("CART", clf_cart, X_train, X_test, y_train, y_test)
-    mostrar_melhor_hiperparametrizacao("MLP", clf_rn, X_train, X_test, y_train, y_test)
+    mostrar_melhor_hiperparametrizacao("CART", clf_cart, X_train, X_test, y_train, y_test, k_folds)
+    mostrar_melhor_hiperparametrizacao("MLP", clf_rn, X_train, X_test, y_train, y_test, k_folds)
 
 
 if __name__ == "__main__":
