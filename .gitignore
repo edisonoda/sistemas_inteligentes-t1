@@ -1,3 +1,5 @@
 /venv
-/datasets
+/datasets/data.csv
+/datasets/dataset-5000.png
+
 __pycache__
